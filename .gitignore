@@ -1,0 +1,20 @@
+# Binarios compilados
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+/bin/
+/target/
+
+# Proyectos generados por springy como pruebas locales
+/prueba-*
+
+# IDEs
+.idea/
+*.iml
+.vscode/
+
+# Sistema
+.DS_Store
+Thumbs.db

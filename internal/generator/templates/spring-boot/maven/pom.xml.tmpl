@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>{{.SpringBootVersion}}</version>
+        <relativePath/>
+    </parent>
+
+    <groupId>{{.Group}}</groupId>
+    <artifactId>{{.Artifact}}</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <name>{{.Name}}</name>
+    <description>Proyecto generado por springy</description>
+
+    {{if eq .Packaging "war"}}<packaging>war</packaging>{{else}}<packaging>jar</packaging>{{end}}
+
+    <properties>
+        <java.version>{{.JavaVersion}}</java.version>
+        <!-- Fuerza la versión del compilador sin depender del parent:
+             si el parent no se resuelve, Maven cae a source/target 1.5
+             y javac 21+ revienta con "release version 5 not supported". -->
+        <maven.compiler.release>{{.JavaVersion}}</maven.compiler.release>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        {{if .ExtraDeps}}{{.ExtraDeps}}
+        {{end}}
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>
