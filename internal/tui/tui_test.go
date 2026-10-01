@@ -44,7 +44,7 @@ func TestViewCentrada(t *testing.T) {
 		"arrancá tu proyecto Spring en local",
 		"¿Cómo se llama el proyecto?",
 		"> mi-api", // prompt + placeholder del input
-		"enter: continuar · ctrl+c: salir · t: matrix",
+		"enter: continuar · ctrl+c: salir", // en el input NO se anuncia "t" (es un carácter escribible)
 	} {
 		if !strings.Contains(out, esperado) {
 			t.Errorf("falta en el render: %q", esperado)

@@ -214,6 +214,12 @@ func estiloInputPanel(in textinput.Model) {
 
 func (t *tui) Init() tea.Cmd { return tea.Batch(textinput.Blink, matCmd()) }
 
+// enInputTexto: hay un campo de texto activo → las teclas de control del
+// matrix (t) y de salida (q) NO deben interceptarse: son caracteres normales.
+func (t *tui) enInputTexto() bool {
+	return t.fase == faseNombre || t.fase == faseMetadatos
+}
+
 func (t *tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
@@ -235,12 +241,19 @@ func (t *tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			t.quit = true
 			return t, tea.Quit
 		case "t":
-			if t.mat != nil {
-				t.mat.toggle()
+			// FIX: "t" solo togglea el matrix en pantallas SIN input de texto.
+			// Si hay input activo (nombre/metadatos), NO retornamos: la tecla
+			// cae al manejador del campo y se escribe como carácter normal.
+			if !t.enInputTexto() {
+				if t.mat != nil {
+					t.mat.toggle()
+				}
+				return t, nil
 			}
-			return t, nil
 		case "q":
-			if t.fase == faseNombre || t.fase == faseResumen {
+			// mismo criterio: "q" sale SOLO desde el Resumen (no hay input ahí);
+			// en faseNombre/Metadatos es un carácter normal del campo.
+			if t.fase == faseResumen {
 				t.quit = true
 				return t, tea.Quit
 			}
@@ -820,7 +833,11 @@ func (t *tui) footer() string {
 	case faseResumen:
 		texto = "enter / y: generar · n: volver · ctrl+c: salir"
 	}
-	texto += " · t: matrix"
+	// el toggle del matrix solo se anuncia donde la tecla "t" está disponible
+	// (fuera de los campos de texto: ahí es un carácter que se escribe)
+	if !t.enInputTexto() {
+		texto += " · t: matrix"
+	}
 	anchoCaja := anchoBanner() + 4 // padding 1 c/u + borde 1 c/u
 	pie := fgg(240, false, false, texto)
 	// footer con FONDO SÓLIDO (máscara propia): la lluvia nunca se mezcla

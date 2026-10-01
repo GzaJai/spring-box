@@ -50,22 +50,48 @@ func huboCeldas(m *matrix) bool {
 	return false
 }
 
-// TestToggleLluvia: la tecla "t" apaga/enciende la lluvia.
+// TestToggleLluvia: la tecla "t" apaga/enciende la lluvia SOLO fuera de los
+// inputs (en selectores); dentro de un campo de texto es un carácter normal.
 func TestToggleLluvia(t *testing.T) {
 	m := tea.Model(initial())
 	m, _ = m.Update(tea.WindowSizeMsg{Width: 120, Height: 30}) // crea el matrix
 
-	mm := m.(*tui)
-	if !mm.mat.activa() {
+	if !m.(*tui).mat.activa() {
 		t.Fatalf("la lluvia debería nacer activa")
 	}
+	// ir al selector de build tool (fuera del input)
+	m.(*tui).input.SetValue("mi-api")
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyEnter})
 	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("t")})
-	if mm.mat.activa() {
-		t.Fatalf("tras 't' la lluvia debería estar apagada")
+	if m.(*tui).mat.activa() {
+		t.Fatalf("tras 't' en selector la lluvia debería estar apagada")
 	}
 	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("t")})
-	if !mm.mat.activa() {
+	if !m.(*tui).mat.activa() {
 		t.Fatalf("tras segundo 't' la lluvia debería volver a encender")
+	}
+}
+
+// TestTseEscribeEnElInput: dentro del campo de texto, "t" y "q" son
+// caracteres NORMALES del input — nunca togglean ni sacan de la app.
+func TestTseEscribeEnElInput(t *testing.T) {
+	m := tea.Model(initial())
+	m, _ = m.Update(tea.WindowSizeMsg{Width: 120, Height: 30})
+
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("t")})
+	if got := m.(*tui).input.Value(); got != "t" {
+		t.Fatalf("la 't' no llegó al input: %q", got)
+	}
+	if !m.(*tui).mat.activa() {
+		t.Errorf("escribir 't' no debería togglear el matrix")
+	}
+
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("q")})
+	if got := m.(*tui).input.Value(); got != "tq" {
+		t.Fatalf("la 'q' no llegó al input: %q", got)
+	}
+	if m.(*tui).quit {
+		t.Errorf("escribir 'q' en el input no debería salir de la app")
 	}
 }
 
