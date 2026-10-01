@@ -44,13 +44,14 @@ func TestGenerate(t *testing.T) {
 			opts: model.Options{Name: "mi-api", Stack: model.Stacks[0], BuildTool: "maven", JavaVer: "17", Packaging: "jar"},
 			wantFiles: []string{
 				"pom.xml",
+				".idea/misc.xml",
 				"src/main/java/com/example/miapi/MiApiApplication.java",
 				"src/test/java/com/example/miapi/MiApiApplicationTests.java",
 				"src/main/resources/application.properties",
 				".gitignore",
 			},
 			notFiles: []string{"build.gradle", "settings.gradle"},
-			check: map[string][]string{
+check: map[string][]string{
 				"pom.xml": {
 					"<packaging>jar</packaging>",
 					"<java.version>17</java.version>",
@@ -58,6 +59,10 @@ func TestGenerate(t *testing.T) {
 					"<version>4.1.1</version>", // parent sin ".RELEASE" — debe existir en Maven Central
 					"<artifactId>mi-api</artifactId>",
 					"<groupId>com.example</groupId>",
+				},
+				".idea/misc.xml": {
+					`languageLevel="JDK_17"`,
+					`project-jdk-name="17"`,
 				},
 				"src/main/java/com/example/miapi/MiApiApplication.java": {
 					"package com.example.miapi;",

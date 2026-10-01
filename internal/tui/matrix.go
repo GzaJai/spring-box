@@ -86,14 +86,17 @@ func (m *matrix) zona(x, y, w, h int) {
 	m.vx, m.vy, m.vw, m.vh = x, y, w, h
 }
 
-// enTransicion: celda dentro del rectángulo extendido (modal + margen) —
-// ahí la gota se atenúa (dim + drop) o queda tapada por el modal.
+// enTransicion: celda en la franja de TRANSICIÓN propiamente dicha — el
+// margen fuera del modal (NO el interior, que el modal tapa). Solo ese
+// anillo se atenúa; el resto del canvas conserva la lluvia a plena potencia.
 func (m *matrix) enTransicion(j, i int) bool {
 	if m.vw == 0 {
 		return false
 	}
-	return j >= m.vx-vignetteX && j < m.vx+m.vw+vignetteX &&
+	dentroExt := j >= m.vx-vignetteX && j < m.vx+m.vw+vignetteX &&
 		i >= m.vy-vignetteY && i < m.vy+m.vh+vignetteY
+	dentroModal := j >= m.vx && j < m.vx+m.vw && i >= m.vy && i < m.vy+m.vh
+	return dentroExt && !dentroModal
 }
 
 // tick avanza un frame: cada columna con delay 0 suelta una gota nueva con
@@ -149,12 +152,12 @@ func (m *matrix) dibujar(c *canvas) {
 			if cl.glow == 0 {
 				continue // celda vacía: el canvas ya tiene ' '
 			}
-			// vignette: gotas cerca del modal, ultra tenues + drop 50%
+			// vignette (SOLO el margen fuera del modal): ultra tenues + drop 50%
 			if m.enTransicion(j, i) {
 				if rand.Intn(100) < 50 {
 					continue
 				}
-				c.set(i, j, cl.ch, "38;2;20;83;45", "", false, true)
+				c.set(i, j, cl.ch, "38;2;0;120;35", "", false, true)
 				continue
 			}
 			// rel = distancia desde la cabeza de esta columna
@@ -168,14 +171,14 @@ func (m *matrix) dibujar(c *canvas) {
 				rel = 20
 			}
 			switch {
-			case rel == 0: // cabeza: verde medio/claro #22c55e
-				c.set(i, j, cl.ch, "38;2;34;197;94", "", false, false)
-			case rel <= 4: // cuerpo cercano: #15803d
-				c.set(i, j, cl.ch, "38;2;21;128;61", "", false, false)
-			case rel <= 10: // cuerpo medio: #14532d
-				c.set(i, j, cl.ch, "38;2;20;83;45", "", false, false)
-			default: // cola desvanecida: #14532d con dim
-				c.set(i, j, cl.ch, "38;2;20;83;45", "", false, true)
+			case rel == 0: // cabeza: verde lima vivo (sin blanco ni fosforescente)
+				c.set(i, j, cl.ch, "38;2;85;255;120", "", false, false)
+			case rel <= 4: // estela cercana: verde digital vivo
+				c.set(i, j, cl.ch, "38;2;0;222;80", "", false, false)
+			case rel <= 10: // cuerpo: verde medio
+				c.set(i, j, cl.ch, "38;2;0;170;55", "", false, false)
+			default: // cola lejana: verde visible (SIN dim — el dim lo apagaba)
+				c.set(i, j, cl.ch, "38;2;0;120;35", "", false, false)
 			}
 		}
 	}

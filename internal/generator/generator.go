@@ -167,6 +167,7 @@ func dataFor(opts model.Options) map[string]string {
 		"Class":             class,
 		"BuildTool":         opts.BuildTool,
 		"JavaVersion":       opts.JavaVer,
+		"IntelliJName":      opts.JavaVer, // nombre del SDK para .idea/misc.xml (matchea los SDK nombrados por versión)
 		"Packaging":         opts.Packaging,
 		"SpringBootVersion": boot,
 	}
