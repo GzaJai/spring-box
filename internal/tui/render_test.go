@@ -27,14 +27,16 @@ func TestParseTruecolor(t *testing.T) {
 // las celdas del canvas (no queda gris).
 func TestBannerMantieneTruecolor(t *testing.T) {
 	celdas := parsearANSI((&tui{w: 200, h: 50}).banner(), panelBG)
-	// el banner son 4 líneas; la primera línea tiene chars con truecolor
-	primera := celdas[0]
+	// el banner puede arrancar con una línea en blanco (aire vertical), así que
+	// recorremos todas las líneas buscando al menos un carácter con truecolor.
 	algunaConColor := false
-	for _, c := range primera {
-		if c.fg != "" {
-			algunaConColor = true
-			if c.fg[0:5] != "38;2;" {
-				t.Fatalf("color del banner no es truecolor: %q", c.fg)
+	for _, linea := range celdas {
+		for _, c := range linea {
+			if c.fg != "" {
+				algunaConColor = true
+				if c.fg[0:5] != "38;2;" {
+					t.Fatalf("color del banner no es truecolor: %q", c.fg)
+				}
 			}
 		}
 	}

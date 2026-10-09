@@ -105,14 +105,14 @@ func TestBannerDegradado(t *testing.T) {
 	if !strings.Contains(out, "▗▄▄▖") {
 		t.Errorf("el banner pierde el wordmark")
 	}
-	// 4 líneas separadas por \n
-	if got := len(strings.Split(out, "\n")); got != 4 {
-		t.Errorf("banner renderizado con %d líneas, esperado 4", got)
+	// 5 líneas separadas por \n (1 en blanco + 4 de arte)
+	if got := len(strings.Split(out, "\n")); got != 5 {
+		t.Errorf("banner renderizado con %d líneas, esperado 5", got)
 	}
 
 	// el degradado interpola: primera línea ≠ última línea
-	r1, g1, b1 := degradado(0, 4)
-	r2, g2, b2 := degradado(3, 4)
+	r1, g1, b1 := degradado(0, 5)
+	r2, g2, b2 := degradado(4, 5)
 	if r1 == r2 && b1 == b2 {
 		t.Errorf("degradado no cambia entre extremos: %d,%d,%d vs %d,%d,%d", r1, g1, b1, r2, g2, b2)
 	}

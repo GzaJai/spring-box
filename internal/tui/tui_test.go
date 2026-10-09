@@ -52,11 +52,11 @@ func TestViewCentrada(t *testing.T) {
 	}
 }
 
-// TestBannerAscii: el wordmark tiene 4 líneas y es compacto.
+// TestBannerAscii: el wordmark es compacto (4 líneas de arte + 1 de aire).
 func TestBannerAscii(t *testing.T) {
 	lineas := strings.Split(bannerASCII, "\n")
-	if len(lineas) != 4 {
-		t.Fatalf("el banner debe tener 4 líneas, tiene %d", len(lineas))
+	if len(lineas) != 5 {
+		t.Fatalf("el banner debe tener 5 líneas (1 en blanco + 4 de arte), tiene %d", len(lineas))
 	}
 	ancho := anchoBanner()
 	if ancho < 40 {
