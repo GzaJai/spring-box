@@ -1,4 +1,4 @@
-module springy
+module github.com/GzaJai/spring-box
 
 go 1.26
 

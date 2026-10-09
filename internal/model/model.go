@@ -23,7 +23,7 @@ var BootVersions = []BootVersion{
 	{Label: "4.2.0-M1 (milestone)", Version: "4.2.0-M1"},
 }
 
-// Stack describe un tipo de proyecto que springy puede generar.
+// Stack describe un tipo de proyecto que spring-box puede generar.
 type Stack struct {
 	Name        string // identificador interno; también el nombre de la carpeta en templates/
 	Label       string // texto corto que se muestra en la TUI

@@ -5,7 +5,7 @@ import "testing"
 // TestParseTruecolor: el parser ANSI DEBE capturar los truecolor de 5 tokens
 // (38;2;r;g;b) — bug previo doble: (1) i+5 < len cortaba el caso exacto y
 // (2) el '[' del inicio de la secuencia no se descartaba ("[38" != "38") →
-// el logo SPRINGY terminaba gris. La secuencia se pasa CON el '[' (caso real).
+// el logo spring-box terminaba gris. La secuencia se pasa CON el '[' (caso real).
 func TestParseTruecolor(t *testing.T) {
 	fg, bg := "", ""
 	bold, faint := false, false
@@ -26,8 +26,8 @@ func TestParseTruecolor(t *testing.T) {
 // TestBannerMantieneTruecolor: el banner parseado conserva el degradado en
 // las celdas del canvas (no queda gris).
 func TestBannerMantieneTruecolor(t *testing.T) {
-	celdas := parsearANSI((&tui{}).banner(), panelBG)
-	// el banner son 6 líneas; la primera línea tiene chars con truecolor
+	celdas := parsearANSI((&tui{w: 200, h: 50}).banner(), panelBG)
+	// el banner son 4 líneas; la primera línea tiene chars con truecolor
 	primera := celdas[0]
 	algunaConColor := false
 	for _, c := range primera {

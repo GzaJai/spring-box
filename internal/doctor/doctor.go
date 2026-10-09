@@ -3,7 +3,7 @@ package doctor
 import "os"
 
 // Check verifica que la carpeta tenga la estructura esperada de un proyecto
-// generado por springy. Es read-only: no modifica absolutamente nada.
+// generado por spring-box. Es read-only: no modifica absolutamente nada.
 //
 // Devuelve la lista de problemas encontrados (vacía = todo en orden).
 func Check(dir string) []string {

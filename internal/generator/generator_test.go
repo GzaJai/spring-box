@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"springy/internal/model"
+	"github.com/GzaJai/spring-box/internal/model"
 )
 
 func TestToCamel(t *testing.T) {

@@ -9,7 +9,7 @@ import (
 	"strings"
 	"text/template"
 
-	"springy/internal/model"
+	"github.com/GzaJai/spring-box/internal/model"
 )
 
 //go:embed all:templates
@@ -175,7 +175,7 @@ func dataFor(opts model.Options) map[string]string {
 
 // collect recorre el árbol de templates recursivamente.
 // stackDir es el prefijo interno que se elimina de la ruta destino final
-// (la variante interna de springy no viaja al proyecto).
+// (la variante interna de spring-box no viaja al proyecto).
 func collect(tplDir, stackDir string, data map[string]string, out *[]File) error {
 	entries, err := fs.ReadDir(templatesFS, tplDir)
 	if err != nil {

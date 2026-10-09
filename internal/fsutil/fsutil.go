@@ -7,15 +7,15 @@ import (
 	"path/filepath"
 	"time"
 
-	"springy/internal/generator"
+	"github.com/GzaJai/spring-box/internal/generator"
 )
 
-const backupDir = ".springy-backup"
+const backupDir = ".spring-box-backup"
 
 // WriteAll escribe los archivos generados en el destino.
 //
 // Patrón tipo gentle-ai: antes de sobrescribir CUALQUIER archivo existente,
-// se guarda una copia en <destino>/.springy-backup (snapshot previo a cada
+// se guarda una copia en <destino>/.spring-box-backup (snapshot previo a cada
 // escritura). Generar dos veces o generar sobre una carpeta con trabajo no
 // destruye nada.
 func WriteAll(dest string, files []generator.File) error {

@@ -13,17 +13,8 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
-	"springy/internal/model"
+	"github.com/GzaJai/spring-box/internal/model"
 )
-
-// bannerASCII es el título principal. Las líneas pueden traer espacios al
-// final: se limpian al renderizar (TrimRight) para que la caja quede exacta.
-const bannerASCII = ` ▄███████▄  ▄████████▄  ▄████████▄   ▄█▄  ▄██▄   ▄██▄  ▄████████▄ ▄██▄   ▄██▄
-████▀ ▀████ ███▀   ▀███ ███▀   ▀███ █████ █████▄ ████ ████▀   ▀▀▀ ▀████▄████▀
-▀█████▄▄    ███▄   ▄███ ███▄   ▄███ █████ ███████████ ████  ▄▄▄▄    ▀█████▀  
-   ▀▀█████▄ █████████▀  █████████▀  █████ ████▀██████ ████  ▀▀███     ███    
-████▄ ▄████ ████        ████ ▀████▄ █████ ████  ▀████ █████▄▄▄███     ███    
- ▀███████▀  ▀██▀        ▀██▀   ▀██▀  ▀█▀  ▀██▀   ▀██▀  ▀████████▀     ▀█▀   `
 
 // fase es el paso actual del asistente. Es el "calco" de start.spring.io:
 // Project (build tool) → Java version → Packaging → Spring Boot versión →
@@ -128,16 +119,17 @@ type tui struct {
 	artifactName  string
 	quit          bool
 	w, h          int // dimensiones del viewport (recibidas por WindowSizeMsg)
-	mat           *matrix // lluvia Matrix de fondo (nil hasta el primer resize)
+	// fondo es el hiperespacio de fondo (nil hasta el primer resize).
+	fondo *starfield
 }
 
-// matTickMsg avanza un frame de la lluvia. Intervalo 60ms ≈ 16fps.
-type matTickMsg struct{}
+// fondoTickMsg avanza un frame del hiperespacio. Intervalo 60ms ≈ 16fps.
+type fondoTickMsg struct{}
 
-const matIntervalo = 60 * time.Millisecond
+const fondoIntervalo = 60 * time.Millisecond
 
-func matCmd() tea.Cmd {
-	return tea.Tick(matIntervalo, func(time.Time) tea.Msg { return matTickMsg{} })
+func fondoCmd() tea.Cmd {
+	return tea.Tick(fondoIntervalo, func(time.Time) tea.Msg { return fondoTickMsg{} })
 }
 
 // Run ejecuta el asistente y devuelve las opciones elegidas.
@@ -212,10 +204,10 @@ func estiloInputPanel(in textinput.Model) {
 	in.PlaceholderStyle = in.PlaceholderStyle.Background(bg)
 }
 
-func (t *tui) Init() tea.Cmd { return tea.Batch(textinput.Blink, matCmd()) }
+func (t *tui) Init() tea.Cmd { return tea.Batch(textinput.Blink, fondoCmd()) }
 
 // enInputTexto: hay un campo de texto activo → las teclas de control del
-// matrix (t) y de salida (q) NO deben interceptarse: son caracteres normales.
+// fondo (t) y de salida (q) NO deben interceptarse: son caracteres normales.
 func (t *tui) enInputTexto() bool {
 	return t.fase == faseNombre || t.fase == faseMetadatos
 }
@@ -226,14 +218,14 @@ func (t *tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// resize (SIGWINCH): recalcular dimensiones; el centrado se reaplica
 		// en cada View() usando w/h actuales
 		t.w, t.h = msg.Width, msg.Height
-		t.mat = newMatrix(t.w, t.h)
+		t.fondo = newStarfield(t.w, t.h)
 		return t, nil
 
-	case matTickMsg:
-		if t.mat != nil && t.mat.activa() {
-			t.mat.tick()
+	case fondoTickMsg:
+		if t.fondo != nil && t.fondo.activa() {
+			t.fondo.tick()
 		}
-		return t, matCmd()
+		return t, fondoCmd()
 
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -241,12 +233,12 @@ func (t *tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			t.quit = true
 			return t, tea.Quit
 		case "t":
-			// FIX: "t" solo togglea el matrix en pantallas SIN input de texto.
+			// FIX: "t" solo togglea el fondo en pantallas SIN input de texto.
 			// Si hay input activo (nombre/metadatos), NO retornamos: la tecla
 			// cae al manejador del campo y se escribe como carácter normal.
 			if !t.enInputTexto() {
-				if t.mat != nil {
-					t.mat.toggle()
+				if t.fondo != nil {
+					t.fondo.toggle()
 				}
 				return t, nil
 			}
@@ -470,8 +462,8 @@ func (t *tui) aplicarMetadatos() {
 
 // ---- jerarquía visual ----
 //
-// Caja de ancho automático: el banner ASCII define el ancho del contenido
-// (≈80 columnas); la caja se dimensiona sola (con su padding y borde).
+// Caja de ancho automático: el wordmark define el ancho del contenido (con un
+// mínimo por la tabla del Resumen); la caja se dimensiona sola (padding + borde).
 // El footer de teclas va FUERA del contenedor, debajo del borde inferior,
 // centrado respecto a la caja. lipgloss.Place centra todo el bloque en el
 // viewport.
@@ -484,12 +476,9 @@ func (t *tui) aplicarMetadatos() {
 // cada línea completa con su background — superficie uniforme hasta el borde.
 const panelBG = "234" // gris oscuro del panel
 
-var (
-	estiloBox       = lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).
-				BorderForeground(lipgloss.Color("245")). // borde UNIFORME, delgado, gris claro
-				Padding(1).Background(lipgloss.Color(panelBG))
-	estiloContenido = lipgloss.NewStyle().Width(anchoBanner()).Align(lipgloss.Center).Background(lipgloss.Color(panelBG)) // columna única centrada CON el fondo
-)
+var estiloBox = lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).
+	BorderForeground(lipgloss.Color("245")).
+	Padding(1).Background(lipgloss.Color(panelBG))
 
 // fgg pinta texto con foreground de 256 colores y cierra SOLO el foreground
 // (39) + bold/faint (22/23): el background del panel sobrevive en toda la
@@ -507,31 +496,31 @@ func fgg(c int, bold, faint bool, s string) string {
 
 func (t *tui) View() string {
 	// Framebuffer 2D de tamaño EXACTO termWidth x termHeight: el render
-	// final es fijo en ambos modos (matrix on/off) — cero saltos al toggle.
+	// final es fijo en ambos modos (fondo on/off) — cero saltos al toggle.
 	c := newCanvas(t.w, t.h)
 
 	caja := t.caja()
 	ac := anchoBloque(caja)
 	altoCaja := len(strings.Split(caja, "\n"))
-	// coordenadas FIJAS del modal (idénticas con y sin lluvia)
+	// coordenadas FIJAS del modal (idénticas con y sin fondo)
 	boxX := max(0, (t.w-ac)/2)
 	boxY := max(0, (t.h-altoCaja)/2)
 
-	// Capa 1: fondo — lluvia o espacios limpios
-	if t.mat != nil && t.mat.activa() {
-		t.mat.zona(boxX, boxY, min(ac, t.w), min(altoCaja, t.h))
-		t.mat.dibujar(c)
+	// Capa 1: fondo — hiperespacio o espacios limpios
+	if t.fondo != nil && t.fondo.activa() {
+		t.fondo.zona(boxX, boxY, min(ac, t.w), min(altoCaja, t.h))
+		t.fondo.dibujar(c)
 	}
 
 	// Capa 2: estampado del modal y del footer — SOBRESCRITURA total por
 	// celda, con fondo de panel garantizado. Es matemáticamente imposible
-	// que la lluvia cruce el borde o que un respiro quede negro.
+	// que el fondo cruce el borde o que un respiro quede negro.
 	estampar(c, parsearANSI(caja, panelBG), boxX, boxY)
 
 	// el pie se posiciona con coordenadas (el respiro lo da el canvas, no el
 	// string): 1 línea de aire debajo del modal; si no cabe, al último renglón.
 	pie := strings.TrimPrefix(t.footer(), "\n\n")
-	footerAncho := anchoBanner() + 4
+	footerAncho := t.anchoModal() + 4
 	yFooter := boxY + altoCaja + 1
 	if yFooter >= t.h {
 		yFooter = t.h - 1
@@ -549,8 +538,10 @@ func (t *tui) caja() string {
 	// FIX franja negra: ninguna línea vacía del contenido puede ser un "\n"
 	// plano (deja ver el negro de la terminal entre los respiros). Todas se
 	// rellenan con espacios y el fondo del panel.
-	interno = rellenarVacias(interno, anchoBanner())
-	return estiloBox.Render(estiloContenido.Render(interno))
+	ancho := t.anchoModal()
+	interno = rellenarVacias(interno, ancho)
+	contenido := lipgloss.NewStyle().Width(ancho).Align(lipgloss.Center).Background(lipgloss.Color(panelBG))
+	return estiloBox.Render(contenido.Render(interno))
 }
 
 // rellenarVacias convierte cada línea sin caracteres visibles en una cadena
@@ -570,23 +561,6 @@ func (t *tui) header() string {
 	return t.banner() + "\n" + fgg(246, false, true, "arrancá tu proyecto Spring en local")
 }
 
-// banner limpia los espacios finales de cada línea para que la caja quede
-// exacta y simétrica, y pinta cada línea con un color del DEGRADÉ
-// (truecolor, verde chartreuse → cian).
-func (t *tui) banner() string {
-	lineas := strings.Split(limpiarBanner(bannerASCII), "\n")
-	n := len(lineas)
-	var sb strings.Builder
-	for i, l := range lineas {
-		r, g, b := degradado(i, n)
-		// cierre fg-only: el fondo del panel sobrevive (fix bloques negros)
-		sb.WriteString(fmt.Sprintf("\x1b[38;2;%d;%d;%dm%s\x1b[39m", r, g, b, l))
-		if i < n-1 {
-			sb.WriteString("\n")
-		}
-	}
-	return sb.String()
-}
 
 // degradado interpola linealmente entre verde (140,255,120) y BLANCO
 // (255,255,255) según el índice de la línea — los colores de Spring.
@@ -833,14 +807,14 @@ func (t *tui) footer() string {
 	case faseResumen:
 		texto = "enter / y: generar · n: volver · ctrl+c: salir"
 	}
-	// el toggle del matrix solo se anuncia donde la tecla "t" está disponible
+	// el toggle del fondo solo se anuncia donde la tecla "t" está disponible
 	// (fuera de los campos de texto: ahí es un carácter que se escribe)
 	if !t.enInputTexto() {
-		texto += " · t: matrix"
+		texto += " · t: estrellas"
 	}
-	anchoCaja := anchoBanner() + 4 // padding 1 c/u + borde 1 c/u
+	anchoCaja := t.anchoModal() + 4 // padding 1 c/u + borde 1 c/u
 	pie := fgg(240, false, false, texto)
-	// footer con FONDO SÓLIDO (máscara propia): la lluvia nunca se mezcla
+	// footer con FONDO SÓLIDO (máscara propia): el fondo nunca se mezcla
 	// con las instrucciones — panel gris consistente con la caja.
 	return "\n\n" + lipgloss.NewStyle().
 		Width(anchoCaja).Align(lipgloss.Center).

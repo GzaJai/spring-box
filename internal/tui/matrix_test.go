@@ -50,25 +50,25 @@ func huboCeldas(m *matrix) bool {
 	return false
 }
 
-// TestToggleLluvia: la tecla "t" apaga/enciende la lluvia SOLO fuera de los
-// inputs (en selectores); dentro de un campo de texto es un carácter normal.
-func TestToggleLluvia(t *testing.T) {
+// TestToggleFondo: la tecla "t" apaga/enciende el hiperespacio SOLO fuera de
+// los inputs (en selectores); dentro de un campo de texto es un carácter.
+func TestToggleFondo(t *testing.T) {
 	m := tea.Model(initial())
-	m, _ = m.Update(tea.WindowSizeMsg{Width: 120, Height: 30}) // crea el matrix
+	m, _ = m.Update(tea.WindowSizeMsg{Width: 120, Height: 30}) // crea el fondo
 
-	if !m.(*tui).mat.activa() {
-		t.Fatalf("la lluvia debería nacer activa")
+	if !m.(*tui).fondo.activa() {
+		t.Fatalf("el fondo debería nacer activo")
 	}
 	// ir al selector de build tool (fuera del input)
 	m.(*tui).input.SetValue("mi-api")
 	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyEnter})
 	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("t")})
-	if m.(*tui).mat.activa() {
-		t.Fatalf("tras 't' en selector la lluvia debería estar apagada")
+	if m.(*tui).fondo.activa() {
+		t.Fatalf("tras 't' en selector el fondo debería estar apagado")
 	}
 	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("t")})
-	if !m.(*tui).mat.activa() {
-		t.Fatalf("tras segundo 't' la lluvia debería volver a encender")
+	if !m.(*tui).fondo.activa() {
+		t.Fatalf("tras segundo 't' el fondo debería volver a encender")
 	}
 }
 
@@ -82,8 +82,8 @@ func TestTseEscribeEnElInput(t *testing.T) {
 	if got := m.(*tui).input.Value(); got != "t" {
 		t.Fatalf("la 't' no llegó al input: %q", got)
 	}
-	if !m.(*tui).mat.activa() {
-		t.Errorf("escribir 't' no debería togglear el matrix")
+	if !m.(*tui).fondo.activa() {
+		t.Errorf("escribir 't' no debería togglear el fondo")
 	}
 
 	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("q")})
@@ -97,22 +97,22 @@ func TestTseEscribeEnElInput(t *testing.T) {
 
 // TestBannerDegradado: el banner usa colores truecolor (38;2) por línea.
 func TestBannerDegradado(t *testing.T) {
-	tu := &tui{}
+	tu := &tui{w: 200, h: 50} // ancho grande → usa el arte completo
 	out := tu.banner()
 	if !strings.Contains(out, "\x1b[38;2;") {
 		t.Errorf("el banner debería tener degradado truecolor")
 	}
-	if !strings.Contains(out, "▄███████▄") {
-		t.Errorf("el banner pierde la primera línea")
+	if !strings.Contains(out, "▗▄▄▖") {
+		t.Errorf("el banner pierde el wordmark")
 	}
-	// 6 líneas separadas por \n
-	if got := len(strings.Split(out, "\n")); got != 6 {
-		t.Errorf("banner renderizado con %d líneas, esperado 6", got)
+	// 4 líneas separadas por \n
+	if got := len(strings.Split(out, "\n")); got != 4 {
+		t.Errorf("banner renderizado con %d líneas, esperado 4", got)
 	}
 
 	// el degradado interpola: primera línea ≠ última línea
-	r1, g1, b1 := degradado(0, 6)
-	r2, g2, b2 := degradado(5, 6)
+	r1, g1, b1 := degradado(0, 4)
+	r2, g2, b2 := degradado(3, 4)
 	if r1 == r2 && b1 == b2 {
 		t.Errorf("degradado no cambia entre extremos: %d,%d,%d vs %d,%d,%d", r1, g1, b1, r2, g2, b2)
 	}
@@ -254,17 +254,17 @@ func TestMatrixDenso(t *testing.T) {
 		t.Errorf("estelas cortas: maxGlow = %d, esperado >= 12 (estela de 12-25)", maxGlow)
 	}
 }
-// TestLluviaEnView: con matrix activo el render usa el blit (la caja queda
-// sobre el fondo, sin perder el contenido).
-func TestLluviaEnView(t *testing.T) {
+// TestFondoEnView: con el fondo activo el render usa el blit (la caja queda
+// sobre el hiperespacio, sin perder el contenido).
+func TestFondoEnView(t *testing.T) {
 	m := tea.Model(initial())
 	m, _ = m.Update(tea.WindowSizeMsg{Width: 120, Height: 40})
 	out := m.View()
-	if !strings.Contains(out, "▄███████▄") {
-		t.Errorf("la caja (banner) no aparece encima de la lluvia")
+	if !strings.Contains(out, "▗▄▄▖") {
+		t.Errorf("la caja (banner) no aparece encima del fondo")
 	}
 	if !strings.Contains(out, "¿Cómo se llama el proyecto?") {
-		t.Errorf("la pregunta no aparece encima de la lluvia")
+		t.Errorf("la pregunta no aparece encima del fondo")
 	}
 	for _, l := range strings.Split(strings.TrimSuffix(out, "\n"), "\n") {
 		if runewidth.StringWidth(ansi.Strip(l)) != 120 {

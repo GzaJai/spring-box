@@ -8,7 +8,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/mattn/go-runewidth"
 
-	"springy/internal/model"
+	"github.com/GzaJai/spring-box/internal/model"
 )
 
 // press envía una tecla y devuelve el modelo con la assertion de tipo hecha.
@@ -40,7 +40,7 @@ func TestViewCentrada(t *testing.T) {
 	// subtítulo tenue, pregunta naranja, input con prompt "> " y footer fuera
 	// del contenedor
 	for _, esperado := range []string{
-		"▄███████▄", // primera línea del banner ASCII (SPRINGY)
+		"▗▄▄▖", // el wordmark se renderiza arriba
 		"arrancá tu proyecto Spring en local",
 		"¿Cómo se llama el proyecto?",
 		"> mi-api", // prompt + placeholder del input
@@ -52,16 +52,18 @@ func TestViewCentrada(t *testing.T) {
 	}
 }
 
-// TestBannerAscii: el bloque del banner tiene las 6 líneas y define el ancho
-// de la caja (≈80 columnas).
+// TestBannerAscii: el wordmark tiene 4 líneas y es compacto.
 func TestBannerAscii(t *testing.T) {
 	lineas := strings.Split(bannerASCII, "\n")
-	if len(lineas) != 6 {
-		t.Fatalf("el banner debe tener 6 líneas, tiene %d", len(lineas))
+	if len(lineas) != 4 {
+		t.Fatalf("el banner debe tener 4 líneas, tiene %d", len(lineas))
 	}
 	ancho := anchoBanner()
-	if ancho < 70 {
-		t.Errorf("banner demasiado angosto: %d columnas, esperado ≈80", ancho)
+	if ancho < 40 {
+		t.Errorf("banner demasiado angosto: %d columnas, esperado ≈55", ancho)
+	}
+	if !strings.Contains(bannerASCII, "▗") {
+		t.Errorf("el banner debería usar el wordmark de bloques")
 	}
 	// sin espacios finales: la caja queda exacta y simétrica
 	limpio := limpiarBanner(bannerASCII)
@@ -210,7 +212,7 @@ func TestResumenTabla(t *testing.T) {
 		"Package:", "com.example.miapi",
 		"Dependencias:", "Web + Test (base) + Spring Security",
 		"Destino:",
-		"enter / y: generar · n: volver · ctrl+c: salir · t: matrix",
+		"enter / y: generar · n: volver · ctrl+c: salir · t: estrellas",
 	} {
 		if !strings.Contains(out, esperado) {
 			t.Errorf("falta en el resumen: %q", esperado)
